@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_single_quotes: true
+    always_use_package_imports: true
+    # Explicit const is skipped on purpose in widget trees; the code was written without a compiler at hand.
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    prefer_const_declarations: false

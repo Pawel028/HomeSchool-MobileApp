@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    name: Analyze, test, debug build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        shell: bash
+        run: |
+          if ! command -v pwsh >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+          pwsh --version
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: flutter analyze
+        run: flutter analyze
+
+      - name: flutter test
+        run: flutter test
+
+      - name: Verify API paths against the contract
+        run: |
+          if [ -d "../api-contracts" ]; then
+            python3 tools/verify_api_paths.py --openapi ../api-contracts/openapi/openapi.json
+          else
+            echo "api-contracts checkout not found next to this repo; skipping (see tools/verify_api_paths.py --help)."
+          fi
+
+      - name: Verify tools/bootstrap.ps1
+        run: pwsh -NoProfile -File tools/test-bootstrap.ps1
+
+      - name: Bootstrap android/ (dev flavor scaffold + patches)
+        run: pwsh -NoProfile -File tools/bootstrap.ps1 -Org in.homeschoolapp
+
+      - name: flutter build apk --debug (dev flavor)
+        run: flutter build apk --debug --flavor dev --dart-define-from-file=env/dev.json

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dev-flavor only. Allows plaintext HTTP to 10.0.2.2, the Android emulator's alias for the host machine's
+  localhost, so `flutter run --flavor dev` can talk to a backend run locally (see README.md's
+  `adb reverse tcp:8000 tcp:8000` note for a physical device instead of the emulator).
+
+  This file is copied by tools/bootstrap.ps1 into android/app/src/dev/res/xml/, a flavor-specific Android
+  source set: Gradle only merges it into `dev` builds, never into `nonprod` or `prod`.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

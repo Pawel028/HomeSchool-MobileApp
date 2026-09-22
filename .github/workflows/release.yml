@@ -1,0 +1,76 @@
+name: Release build
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Flavor to build'
+        required: true
+        type: choice
+        options: [nonprod, prod]
+        default: nonprod
+
+jobs:
+  build-signed-appbundle:
+    name: Build signed appbundle (${{ github.event.inputs.flavor }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PowerShell
+        shell: bash
+        run: |
+          if ! command -v pwsh >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: Check env/${{ github.event.inputs.flavor }}.json is configured
+        run: pwsh -NoProfile -File tools/check-env.ps1 -Flavor ${{ github.event.inputs.flavor }}
+
+      - name: Bootstrap android/
+        run: pwsh -NoProfile -File tools/bootstrap.ps1 -Org in.homeschoolapp
+
+      # The signing key never touches disk unencoded outside this step, and the decoded file and
+      # android/key.properties are both removed in a final cleanup step below, success or failure.
+      - name: Decode signing key
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "::error::Missing secret RELEASE_KEYSTORE_BASE64. Add it in repo Settings > Secrets and variables > Actions before running this workflow."
+            exit 1
+          fi
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          cat > android/key.properties <<EOF
+          storeFile=$RUNNER_TEMP/release.jks
+          storePassword=$RELEASE_KEYSTORE_PASSWORD
+          keyAlias=$RELEASE_KEY_ALIAS
+          keyPassword=$RELEASE_KEY_PASSWORD
+          EOF
+
+      - name: flutter build appbundle --release
+        run: pwsh -NoProfile -File tools/build.ps1 -Flavor ${{ github.event.inputs.flavor }} -Target appbundle -Release:$true
+
+      - name: Clean up signing material
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/release.jks" android/key.properties
+
+      - name: Upload appbundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: homeschooling-${{ github.event.inputs.flavor }}-appbundle
+          path: build/app/outputs/bundle/${{ github.event.inputs.flavor }}Release/*.aab
+          if-no-files-found: error

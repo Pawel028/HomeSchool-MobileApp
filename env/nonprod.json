@@ -1,0 +1,4 @@
+{
+  "API_BASE_URL": "https://REPLACE-WITH-TERRAFORM-OUTPUT-api_url",
+  "ENV_NAME": "nonprod"
+}
