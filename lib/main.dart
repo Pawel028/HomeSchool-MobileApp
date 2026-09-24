@@ -8,7 +8,7 @@ Future<void> main() async {
   final AppEnvironment environment = await AppEnvironment.bootstrap();
   runApp(
     ProviderScope(
-      overrides: <Override>[environmentProvider.overrideWithValue(environment)],
+      overrides: [environmentProvider.overrideWithValue(environment)],
       child: const HomeSchoolingApp(),
     ),
   );

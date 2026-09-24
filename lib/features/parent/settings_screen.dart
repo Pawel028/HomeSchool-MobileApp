@@ -79,7 +79,7 @@ class SettingsScreen extends ConsumerWidget {
               title: Text(purpose.value),
               value: family.consentGranted(purpose.key),
               onChanged: (bool v) {
-                final String? noticeVersion = config.valueOrNull?.declarationNoticeVersion;
+                final String? noticeVersion = config.value?.declarationNoticeVersion;
                 if (noticeVersion == null) return;
                 ref.read(familyProvider.notifier).setConsent(purpose: purpose.key, granted: v, noticeVersion: noticeVersion);
               },

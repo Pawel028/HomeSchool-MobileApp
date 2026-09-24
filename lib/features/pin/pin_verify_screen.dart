@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homeschooling/core/validators.dart';
 import 'package:homeschooling/features/common/pin_pad.dart';
+import 'package:homeschooling/features/pin/pin_set_screen.dart';
+import 'package:homeschooling/state/auth_providers.dart';
 import 'package:homeschooling/state/pin_providers.dart';
 import 'package:homeschooling/strings.dart';
 
@@ -24,12 +26,35 @@ class _PinVerifyScreenState extends ConsumerState<PinVerifyScreen> {
   @override
   void initState() {
     super.initState();
+    // A parent can reach this screen (delete child, exit child mode, ...) before ever choosing a PIN.
+    // Send them to set one first instead of asking them to verify a PIN that was never created.
+    if (!ref.read(authProvider).pinSet) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _setupThenVerify();
+      });
+      return;
+    }
     final String? cached = ref.read(pinProvider.notifier).cachedElevationToken();
     if (cached != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.pop(cached);
       });
     }
+  }
+
+  Future<void> _setupThenVerify() async {
+    final String? pin = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(builder: (BuildContext ctx) => const PinSetScreen()),
+    );
+    if (!mounted) return;
+    if (pin == null) {
+      // The parent backed out of setting a PIN: behave like backing out of verification.
+      context.pop();
+      return;
+    }
+    final String? token = await ref.read(pinProvider.notifier).verify(pin);
+    if (!mounted) return;
+    context.pop(token);
   }
 
   @override

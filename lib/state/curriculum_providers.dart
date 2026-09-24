@@ -30,7 +30,7 @@ class SkillsQuery {
   int get hashCode => Object.hash(subject, level);
 }
 
-final FutureProvider.family<List<Skill>, SkillsQuery> skillsProvider =
+final skillsProvider =
     FutureProvider.family<List<Skill>, SkillsQuery>((Ref ref, SkillsQuery query) {
   return ref.watch(environmentProvider).curriculumRepository.skills(subject: query.subject, level: query.level);
 });

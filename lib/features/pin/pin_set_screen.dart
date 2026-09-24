@@ -42,7 +42,9 @@ class _PinSetScreenState extends ConsumerState<PinSetScreen> {
     if (ok) {
       await ref.read(authProvider.notifier).refreshMe();
       if (!mounted) return;
-      if (context.canPop()) context.pop();
+      // Hand the just-chosen PIN back to the caller (PinVerifyScreen uses it to auto-verify after a
+      // first-time setup, so the parent doesn't have to immediately re-type the PIN they just chose).
+      if (context.canPop()) context.pop(_pin.text);
     }
   }
 

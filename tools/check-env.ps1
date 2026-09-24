@@ -60,3 +60,4 @@ if ($json.API_BASE_URL -notmatch '^https://') {
 }
 
 Write-Host "OK: $EnvFile looks configured (API_BASE_URL = $($json.API_BASE_URL))" -ForegroundColor Green
+exit 0

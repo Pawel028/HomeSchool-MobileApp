@@ -91,7 +91,7 @@ class _GuardianScreenState extends ConsumerState<GuardianScreen> {
   }
 
   List<Widget> _codeStep(GuardianState guardian, AsyncValue<RemoteConfig> config) {
-    final String? noticeVersion = config.valueOrNull?.declarationNoticeVersion;
+    final String? noticeVersion = config.value?.declarationNoticeVersion;
     return <Widget>[
       Text('${Str.guardianCodeSentTo} ${guardian.phone ?? ''}'),
       const SizedBox(height: 12),

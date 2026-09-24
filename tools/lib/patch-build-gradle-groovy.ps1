@@ -23,7 +23,9 @@ function Fail([string]$Message) {
     throw $Message
 }
 
-$content = Get-Content -Raw -Path $Path
+$rawContent = Get-Content -Raw -Path $Path
+$hadCrLf = $rawContent -match "`r`n"
+$content = $rawContent -replace "`r`n", "`n"
 $original = $content
 
 # --- 1. SDK versions -------------------------------------------------------
@@ -134,6 +136,9 @@ if ($content -notmatch [regex]::Escape($releaseMarker)) {
 }
 
 if ($content -ne $original) {
+    if ($hadCrLf) {
+        $content = $content -replace "`n", "`r`n"
+    }
     Set-Content -Path $Path -Value $content -NoNewline
     Write-Host "  Patched."
 } else {

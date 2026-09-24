@@ -14,6 +14,9 @@
         and replaced wholesale; if that text is not found (because Flutter changed the template, or this
         script already patched it) the *other* branch of the check confirms our own marker is present, and
         only fails if neither is true.
+      - line endings: the file `flutter create` writes on Windows uses CRLF, but this script's literal
+        expected-text blocks are LF (authored on Linux). Multi-line exact-text matches (step 5) would
+        silently fail on CRLF input, so content is normalized to LF on read and restored to CRLF on write.
 #>
 [CmdletBinding()]
 param(
@@ -27,7 +30,9 @@ function Fail([string]$Message) {
     throw $Message
 }
 
-$content = Get-Content -Raw -Path $Path
+$rawContent = Get-Content -Raw -Path $Path
+$hadCrLf = $rawContent -match "`r`n"
+$content = $rawContent -replace "`r`n", "`n"
 $original = $content
 
 # --- 1. SDK versions -------------------------------------------------------
@@ -47,9 +52,11 @@ if ($content -notmatch [regex]::Escape($signingLoaderMarker)) {
         Fail "Could not find the 'plugins {' anchor at the top of $Path to insert the signing config loader before it."
     }
     $loader = @"
+import java.util.Properties
+
 $signingLoaderMarker (reads android/key.properties, which is gitignored — see README.md)
 val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreProperties = java.util.Properties()
+val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
@@ -67,6 +74,11 @@ if ($content -notmatch [regex]::Escape($signingConfigsMarker)) {
     }
     $block = @'
 ndkVersion = flutter.ndkVersion
+
+    // resValue() in productFlavors below requires this to be explicitly enabled (off by default in modern AGP).
+    buildFeatures {
+        resValues = true
+    }
 
     signingConfigs {
         create("release") {
@@ -152,6 +164,9 @@ if ($content -notmatch [regex]::Escape($releaseMarker)) {
 }
 
 if ($content -ne $original) {
+    if ($hadCrLf) {
+        $content = $content -replace "`n", "`r`n"
+    }
     Set-Content -Path $Path -Value $content -NoNewline
     Write-Host "  Patched."
 } else {

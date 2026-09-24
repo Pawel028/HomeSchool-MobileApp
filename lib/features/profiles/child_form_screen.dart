@@ -95,13 +95,14 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
         }
       }
       if (fresh != null) {
+        final Child freshChild = fresh;
         setState(() {
-          _name.text = fresh.displayName;
-          _avatar = fresh.avatar;
-          _levelCode = fresh.levelCode;
-          _interests = Set<String>.of(fresh.interests);
-          _goals.text = fresh.goals.join(', ');
-          _version = fresh.version;
+          _name.text = freshChild.displayName;
+          _avatar = freshChild.avatar;
+          _levelCode = freshChild.levelCode;
+          _interests = Set<String>.of(freshChild.interests);
+          _goals.text = freshChild.goals.join(', ');
+          _version = freshChild.version;
           _apiError = Str.staleProfile;
         });
       }

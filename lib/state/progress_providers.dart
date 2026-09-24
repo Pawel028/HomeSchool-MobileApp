@@ -4,7 +4,7 @@ import 'package:homeschooling/models/progress.dart';
 import 'package:homeschooling/state/environment.dart';
 
 /// Parent dashboard (overview + today + recommendations) for one child.
-final FutureProvider.family<Dashboard, String> dashboardProvider = FutureProvider.family<Dashboard, String>(
+final dashboardProvider = FutureProvider.family<Dashboard, String>(
   (Ref ref, String childId) => ref.watch(environmentProvider).progressRepository.dashboard(childId),
 );
 
@@ -21,7 +21,7 @@ class MasteryQuery {
   int get hashCode => Object.hash(childId, subject);
 }
 
-final FutureProvider.family<List<Mastery>, MasteryQuery> masteryProvider =
+final masteryProvider =
     FutureProvider.family<List<Mastery>, MasteryQuery>((Ref ref, MasteryQuery query) {
   return ref.watch(environmentProvider).progressRepository.mastery(query.childId, subject: query.subject);
 });
