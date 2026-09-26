@@ -30,6 +30,7 @@ class Str {
   // ---- Errors (generic, shown when a request fails) ----
   static const String errorNetwork = "Can't reach the server. Check your connection and try again.";
   static const String errorGeneric = 'Something went wrong. Please try again.';
+  static const String errorOtpInvalid = "That code is wrong or has expired. Check it and try again, or resend.";
   static const String errorBadResponse = 'The server sent something unexpected. Please try again.';
   static const String errorSessionExpired = 'Your session ended. Please sign in again.';
   static const String errorConflict = 'This was changed somewhere else. Reloading the latest version.';
@@ -209,6 +210,9 @@ class Str {
   static const String ratingIndependent = 'Independent';
   static const String baselineChecklistTitle = 'Starting checklist';
   static const String baselineChecklistIntro = 'Rate what your child can already do, so we start at the right level.';
+  static const String addMoreSkills = 'Add more skills';
+  static const String switchProfile = 'Switch profile';
+  static const String noNewSkillsToAdd = "That's everything at this level for now \u2014 new skills will show up here after an app update.";
 
   // ---- Parent: reviews ----
   static const String reviewsTitle = 'Needs your review';

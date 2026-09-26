@@ -18,6 +18,8 @@ String errorText(ApiException e) {
       return Str.errorEmailTaken;
     case 'validation_error':
       return Str.errorValidation;
+    case 'otp_invalid':
+      return Str.errorOtpInvalid;
     default:
       return Str.errorGeneric;
   }

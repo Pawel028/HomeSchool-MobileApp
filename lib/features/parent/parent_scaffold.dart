@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homeschooling/models/child.dart';
 import 'package:homeschooling/state/family_providers.dart';
 import 'package:homeschooling/state/parent_view_providers.dart';
+import 'package:homeschooling/state/router_guard.dart';
 import 'package:homeschooling/strings.dart';
 
 const List<_Tab> _tabs = <_Tab>[
@@ -42,6 +43,11 @@ class ParentScaffold extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
+        leading: IconButton(
+          icon: const Icon(Icons.switch_account_outlined),
+          tooltip: Str.switchProfile,
+          onPressed: () => context.go(Routes.profiles),
+        ),
         actions: <Widget>[
           if (family.children.length > 1)
             PopupMenuButton<Child>(

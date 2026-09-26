@@ -1,4 +1,4 @@
 {
-  "API_BASE_URL": "https://REPLACE-WITH-TERRAFORM-OUTPUT-api_url",
+  "API_BASE_URL": "https://ca-hs-dev-api.wonderfulgrass-00be683d.centralindia.azurecontainerapps.io",
   "ENV_NAME": "prod"
 }
