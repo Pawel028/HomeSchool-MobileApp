@@ -16,14 +16,35 @@ class ProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final Child? child = ref.watch(parentViewedChildProvider);
+    final Set<String> existingSkillCodes = child == null
+        ? const <String>{}
+        : (ref.watch(masteryProvider(MasteryQuery(child.id))).asData?.value ?? const <Mastery>[])
+            .map((Mastery m) => m.skillCode)
+            .toSet();
     return ParentScaffold(
       currentPath: '/parent/progress',
       title: Str.progressTitle,
+      actions: child == null
+          ? null
+          : <Widget>[
+              IconButton(
+                icon: const Icon(Icons.playlist_add),
+                tooltip: Str.addMoreSkills,
+                onPressed: () => _showBaselineDialog(context, child, existingSkillCodes),
+              ),
+            ],
       body: child == null
           ? const EmptyView(message: Str.emptyGeneric, icon: Icons.face_outlined)
           : _MasteryList(child: child),
     );
   }
+}
+
+void _showBaselineDialog(BuildContext context, Child child, Set<String> excludeCodes) {
+  showDialog<void>(
+    context: context,
+    builder: (BuildContext ctx) => _BaselineDialog(child: child, excludeCodes: excludeCodes),
+  );
 }
 
 class _MasteryList extends ConsumerWidget {
@@ -45,7 +66,7 @@ class _MasteryList extends ConsumerWidget {
           return EmptyView(
             message: Str.baselineChecklistIntro,
             action: FilledButton(
-              onPressed: () => _openBaseline(context, ref),
+              onPressed: () => _showBaselineDialog(context, child, const <String>{}),
               child: const Text(Str.baselineChecklistTitle),
             ),
           );
@@ -67,10 +88,6 @@ class _MasteryList extends ConsumerWidget {
         );
       },
     );
-  }
-
-  void _openBaseline(BuildContext context, WidgetRef ref) {
-    showDialog<void>(context: context, builder: (BuildContext ctx) => _BaselineDialog(child: child));
   }
 
   void _openObservationDialog(BuildContext context, WidgetRef ref, Mastery mastery) {
@@ -169,9 +186,10 @@ class _ObservationDialogState extends ConsumerState<_ObservationDialog> {
 }
 
 class _BaselineDialog extends ConsumerStatefulWidget {
-  const _BaselineDialog({required this.child});
+  const _BaselineDialog({required this.child, this.excludeCodes = const <String>{}});
 
   final Child child;
+  final Set<String> excludeCodes;
 
   @override
   ConsumerState<_BaselineDialog> createState() => _BaselineDialogState();
@@ -199,28 +217,40 @@ class _BaselineDialogState extends ConsumerState<_BaselineDialog> {
               skills.when(
                 loading: () => const LoadingView(),
                 error: (Object e, StackTrace st) => Text(errorTextFromAny(e)),
-                data: (List<Skill> options) => Column(
-                  children: <Widget>[
-                    for (final Skill skill in options)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(child: Text(skill.name)),
-                            SegmentedButton<String>(
-                              segments: const <ButtonSegment<String>>[
-                                ButtonSegment<String>(value: 'trying', label: Text(Str.ratingTrying)),
-                                ButtonSegment<String>(value: 'with_help', label: Text(Str.ratingWithHelp)),
-                                ButtonSegment<String>(value: 'independent', label: Text(Str.ratingIndependent)),
-                              ],
-                              selected: <String>{_ratings[skill.code] ?? 'trying'},
-                              onSelectionChanged: (Set<String> s) => setState(() => _ratings[skill.code] = s.first),
-                            ),
-                          ],
+                data: (List<Skill> options) {
+                  final List<Skill> newSkills =
+                      options.where((Skill s) => !widget.excludeCodes.contains(s.code)).toList();
+                  if (newSkills.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(Str.noNewSkillsToAdd),
+                    );
+                  }
+                  return Column(
+                    children: <Widget>[
+                      for (final Skill skill in newSkills)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(skill.name),
+                              const SizedBox(height: 6),
+                              SegmentedButton<String>(
+                                segments: const <ButtonSegment<String>>[
+                                  ButtonSegment<String>(value: 'trying', label: Text(Str.ratingTrying)),
+                                  ButtonSegment<String>(value: 'with_help', label: Text(Str.ratingWithHelp)),
+                                  ButtonSegment<String>(value: 'independent', label: Text(Str.ratingIndependent)),
+                                ],
+                                selected: <String>{_ratings[skill.code] ?? 'trying'},
+                                onSelectionChanged: (Set<String> s) => setState(() => _ratings[skill.code] = s.first),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
-                ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
